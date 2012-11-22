@@ -58,15 +58,15 @@
  *
  * @api
  */
-class UniversalClassLoader {
+class TFS_UniversalClassLoader {
     private $namespaces = array();
     private $prefixes = array();
     private $namespaceFallbacks = array();
     private $prefixFallbacks = array();
-    private $apcprefix = false;
+    private $apcprefix = FALSE;
 
     /**
-     * @var $_intance UniversalClassLoader
+     * @var $_intance TFS_UniversalClassLoader
      */
     private static $_instance;
 
@@ -78,7 +78,7 @@ class UniversalClassLoader {
             global $drupal_hash_salt;
             self::$_instance->apcprefix = 'autoload.' . $drupal_hash_salt . '.';
         }
-        spl_autoload_register(array(self::$_instance, 'loadClass'), true, true);
+        spl_autoload_register(array(self::$_instance, 'loadClass'), TRUE, TRUE);
         return self::$_instance;
     }
 
@@ -198,8 +198,8 @@ class UniversalClassLoader {
      *
      * @api
      */
-    public function register($prepend = false) {
-        spl_autoload_register(array($this, 'loadClass'), true, $prepend);
+    public function register($prepend = FALSE) {
+        spl_autoload_register(array($this, 'loadClass'), TRUE, $prepend);
     }
 
     /**
@@ -227,7 +227,7 @@ class UniversalClassLoader {
             if ('\\' == $class[0]) {
                 $class = substr($class, 1);
             }
-            if (false !== $pos = strrpos($class, '\\')) {
+            if (FALSE !== $pos = strrpos($class, '\\')) {
                 // namespaced class name
                 $namespace = substr($class, 0, $pos);
                 foreach ($this->namespaces as $ns => $dirs) {
@@ -271,7 +271,7 @@ class UniversalClassLoader {
                 }
             }
         }
-      throw new Exception('Could not load '.$class);
+      return FALSE;
     }
 
     private function returnFile($class, $file) {

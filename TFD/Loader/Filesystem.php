@@ -8,7 +8,7 @@
 
 class TFD_Loader_Filesystem extends Twig_Loader_Filesystem {
   protected $resolverCache;
-  protected $apcprefix = false;
+  protected $apcprefix = FALSE;
 
   public function __construct() {
     parent::__construct(array());
@@ -24,26 +24,26 @@ class TFD_Loader_Filesystem extends Twig_Loader_Filesystem {
 
   // TODO: Figure out if this can be cached in APC as well.
   public function getCacheKey($name) {
-    if (!isset($this->cache[$name])) {
-      $found = false;
-      if (is_readable($name)) {
-        $this->cache[$name] = $name;
-        $found = true;
-      }
-      else {
-        $paths = twig_get_discovered_templates();
 
-        foreach ($paths as $path) {
-          $completeName = $path . '/' . $name;
-          if (is_readable($completeName)) {
-            $this->cache[$name] = $completeName;
-            $found = true;
-            break;
-          }
-        }
-        #
+    $found = FALSE;
+    if (isset($this->cache[$name])) {
+      $found = TRUE;
+      return $this->cache[$name];
+    }
+    elseif (is_readable($name)) {
+      $this->cache[$name] = $name;
+      $found = TRUE;
+    }
+    else {
+      $lookup_paths = twig_get_discovered_templates(); // Very expensive call
+      $fullTemplatePath = $lookup_paths[$name];
+      if (is_readable($fullTemplatePath)) {
+        $this->cache[$name] = $fullTemplatePath;
+        $found = TRUE;
       }
-      if (!$found) throw new RuntimeException(sprintf('Unable to load template "%s"', $name));
+    }
+    if (!$found) {
+      throw new RuntimeException(sprintf('Unable to load template "%s"', $name));
     }
     return $this->cache[$name];
   }
@@ -56,13 +56,13 @@ class TFD_Loader_Filesystem extends Twig_Loader_Filesystem {
 
   public function findTemplate($name) {
     if (!isset($this->resolverCache[$name])) {
-      $found = false;
+      $found = FALSE;
       if ($fullPath = $this->getCacheKey($name)) {
         $this->resolverCache[$name] = $fullPath;
         if ($this->apcprefix) {
           apc_store($this->apcprefix . 'resolver', $this->resolverCache);
         }
-        $found = true;
+        $found = TRUE;
       }
       if (!$found) {
         throw new RuntimeException(sprintf('Unable to load template "%s"', $name));
