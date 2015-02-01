@@ -37,7 +37,7 @@ class TFD_Node_With extends Twig_Node
                 ->write("\n")
                 ->write('array_push($withStack, $context);' . "\n");
 
-        if ($this->hasOption('sandboxed')) {
+        if ($this->hasOption('sandboxed') || $this->hasOption('only')) {
             $compiler->write('$values = array();' . "\n");
         } elseif ($this->hasOption('merged')) {
             $compiler->write('$values = $context;' . "\n");

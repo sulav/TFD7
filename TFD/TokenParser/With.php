@@ -56,7 +56,8 @@ class TFD_TokenParser_With extends Twig_TokenParser
 {
     private $options = array(
         'merged',
-        'sandboxed'
+        'sandboxed',
+        'only'
     );
 
     /**

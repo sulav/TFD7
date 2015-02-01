@@ -1,0 +1,218 @@
+<?php
+/* Drupal implementation of the twig template engine.
+ *
+ * You *need* PHP 5.4.x or higher to use code.
+ *
+ * @version 7.2-x
+ * @author René Bakx
+ *
+ */
+
+
+/**
+ * Register the needed classes with the autoloader
+ */
+
+$twig_class_map = array(
+    'Twig_' => DRUPAL_ROOT . '/sites/all/libraries/Twig/lib/Twig/',
+    'TFD_' => DRUPAL_ROOT . '/sites/all/libraries/TFD/TFD/',
+);
+if (module_exists('xautoload')) {
+    $finder = xautoload_get_finder();
+    $finder->registerPrefixesDeep($twig_class_map);
+} else {
+    $autoloader = & drupal_static(__FUNCTION__);
+    if (!$autoloader) {
+        include_once(DRUPAL_ROOT . '/sites/all/libraries/TFD/autoloader/Autoloader.php');
+        $autoloader = UniversalClassLoader::getInstance();
+        $autoloader->registerPrefixes($twig_class_map);
+    }
+
+}
+
+
+/**
+ * registers the .tpl.twig extension for twig templates
+ * @return string
+ */
+function twig_extension()
+{
+    return ".tpl.twig";
+}
+
+
+/**
+ * Implementation of hook_init()
+ *
+ * note get's called at rebuild registry!
+ *
+ * @param <object> $theme
+ */
+function twig_init($theme)
+{
+    if (file_exists($file = dirname($theme->filename) . '/template.php')) {
+        require_once($file);
+    }
+}
+
+/**
+ * Implementation of hook_theme()
+ *
+ * Registers both twig and php_template functions and templates
+ * which is needed to perform the fallback to .tpl.php
+ *
+ * @link http://api.drupal.org/api/function/hook_theme/7
+ * @return <array>
+ */
+
+function twig_theme($existing, $type, $theme, $path)
+{
+    $templates = drupal_find_theme_functions($existing, array($theme));
+    $templates += drupal_find_theme_templates($existing, twig_extension(), $path);
+    return $templates;
+}
+
+/**
+ * Implementation of hook ENGINE_render_template
+ *
+ * Checks if the twig template is available or else let drupal fallback to phptemplate
+ *
+ * @param <string> $template template filename
+ * @param <array> $variables variables to be assigned to template
+ * @return <string> rendered template
+ */
+function twig_render_template($template, $variables = array())
+{
+    $content = '';
+    if (file_exists($template)) {
+        try {
+            $twig = twig_get_instance();
+            $template = $twig->loadTemplate($template);
+            $content = $template->render($variables);
+        } catch (Exception $e) {
+            $content = t('Twig error "!error"', array('!error' => $e->getMessage()));
+            die($e->getMessage());
+        }
+    } else {
+        $content = t('Template (!template) not found ', array('!template' => $template));
+    }
+    return $content;
+}
+
+/**
+ * Clears the entire template cache folder
+ * @return void
+ */
+function twig_clear_cache()
+{
+    twig_get_instance()->flushCompilerCache();
+    watchdog('twig', 'All caches cleared');
+}
+
+
+/*
+ * Returns a singleton version of the twig template engine
+ * @return <object> Twig_Environment
+*/
+function twig_get_instance()
+{
+    static $twig_engine;
+    if (!is_object($twig_engine)) {
+        global $theme_info;
+        $twigEnvironment = array();
+        $twigEnvironment['autorender'] = TRUE; // auto rendering of {{content}} instead of doing a {{render(content)}}
+        $twigEnvironment['autoescape'] = false; // Automatically escape all output
+        $twigEnvironment['auto_reload'] = true; //Whether to reload the template if the original source changed.
+        $twigEnvironment['debug'] = false; // When set to `true`, the generated templates have a __toString() method
+        if (false !== $cache = variable_get('file_twigcache_path', false)) {
+            $twigEnvironment['cache'] = $cache;
+        } elseif (false !== $cache = twig_test_cachepath('private://twig_cache' . '/' . $theme_info->name)) {
+            $twigEnvironment['cache'] = $cache;
+        } elseif (FALSE !== $cache = twig_test_cachepath('public://twig_cache' . '/' . $theme_info->name))
+            $twigEnvironment['cache'] = $cache;
+        else {
+            die('Could not write to a valid cache path');
+        }
+        $loader = new TFD_Loader_Filesystem();
+        $twig_engine = new TFD_Environment($loader, $twigEnvironment);
+        $twig_engine->addExtension(new TFD_Extension());
+    }
+    return $twig_engine;
+}
+
+/**
+ * Find templates in the current theme and the basetheme
+ * return an array where the paths are transformed into
+ * theme::point:to:template.twig.tpl
+ *
+ * Cache the implementations because this is a rather expensive
+ * call which can occur multiple times per hit
+ *
+ * The directory name 'templates' is ommitted, where else would the templates be ;)
+ *
+ *
+ * @return array (
+ *                path/to/file = realpath,       // current theme
+ *                (base)theme::path/to/file = realpath // parent/base theme
+ * )
+ *
+ */
+
+function twig_get_discovered_templates()
+{
+    $implementations = & drupal_static(__FUNCTION__, array());
+    if (!$implementations) {
+        global $theme;
+        $available_themes = list_themes();
+        $theme_paths = array();
+        $theme_paths[$theme] = dirname($available_themes[$theme]->filename);
+        $basethemes = drupal_find_base_themes($available_themes, $theme);
+        $hasParent = FALSE;
+        if (count($basethemes) > 0) {
+            $hasParent = TRUE;
+            foreach (array_keys($basethemes) as $basename) {
+                if (isset($available_themes[$basename])) {
+                    $theme_paths[$basename] = dirname($available_themes[$basename]->filename);
+                }
+            }
+        }
+        $regex = '/' . str_replace('.', '\.', twig_extension()) . '$/';
+        foreach ($theme_paths as $theme_name => $path) {
+            $files = drupal_system_listing($regex, $path, 'name', 0);
+            $theme_folder = '/themes/' . $theme_name . '/';
+            foreach ($files as $template => $file) {
+                $matches = explode($theme_folder, $file->uri);
+                $converted_path = str_replace("templates/", "", $matches[1]);
+                $realpath = dirname($file->uri) . '/' . $file->filename;
+
+                if ($theme === $theme_name) {
+                    $implementations[$converted_path] = $realpath;
+                } else {
+                    $implementations[$theme_name . '::' . $converted_path] = $realpath;
+                }
+
+            }
+        }
+
+    }
+    return $implementations;
+}
+
+
+/**
+ * Converts the stream name to a realdir location and
+ * Tests if it is a writable directory to store the twig cache files in.
+ *
+ * @param $path
+ * @return bool
+ */
+function twig_test_cachepath($path)
+{
+    if (file_stream_wrapper_valid_scheme(file_uri_scheme($path))) {
+        $path = drupal_dirname($path);
+        if (is_dir($path) && is_writable($path)) {
+            return $path;
+        }
+    }
+    return false;
+}

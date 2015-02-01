@@ -12,7 +12,7 @@ global $argv, $options;
 
 
 if (substr_count($argv[0], 'drush.php') == 0 || PHP_SAPI !== 'cli') {
-    echo "Please use drush to execute : \ndrush scr ./<folder>/sites/all/libraries/tfd/post-install.php\n\n";
+    echo "Please use drush to execute : \ndrush scr ./<folder>/sites/all/libraries/TFD/post-install.php\n\n";
     die();
 }
 $siterootchunks = explode('/', $argv[2]);
@@ -20,7 +20,7 @@ $siteroot = drush_get_context('DRUSH_OLDCWD') . '/' . $siterootchunks[0] . '/';
 if (is_dir($siteroot)) {
     define('SITE_ROOT', $siteroot);
     define('ENGINE_PATH', SITE_ROOT . 'themes/engines/twig/');
-    define('TFD_PATH', 'sites/all/libraries/twig-for-drupal/');
+    define('TFD_PATH', 'sites/all/libraries/TFD/');
     drush_print('Site located at ' . SITE_ROOT);
     copy_engine();
     enable_autoloader();

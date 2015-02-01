@@ -1,34 +1,38 @@
 <?php
+
 /* Extended environmnent for the drupal version
 *
 * Part of the Drupal twig extension distribution
 * http://renebakx.nl/twig-for-drupal
 */
 
-class TFD_Environment extends Twig_Environment {
+class TFD_Environment extends Twig_Environment
+{
 
     protected $templateClassPrefix = '__TFDTemplate_';
     protected $fileExtension = 'tpl.twig';
     protected $autoRender = false;
 
-    public function __construct(Twig_LoaderInterface $loader = null, $options = array()) {
+    public function __construct(Twig_LoaderInterface $loader = null, $options = array())
+    {
         $this->fileExtension = twig_extension();
         $options = array_merge(array(
             'autorender' => true,
         ), $options);
         // Auto render means, overrule default class
         if ($options['autorender']) {
-            $options['base_template_class'] = 'TFD_Template';
             $this->autoRender = true;
         }
         parent::__construct($loader, $options);
     }
 
-    private function generateCacheKeyByName($name) {
+    private function generateCacheKeyByName($name)
+    {
         return $name = preg_replace('/\.' . $this->fileExtension . '$/', '', $this->loader->getCacheKey($name));
     }
 
-    public function isAutoRender() {
+    public function isAutoRender()
+    {
         return $this->autoRender;
     }
 
@@ -39,12 +43,24 @@ class TFD_Environment extends Twig_Environment {
      * @param <string> $name of template
      * @return <string>
      */
-    public function getTemplateClass($name) {
+    public function getTemplateClass($name, $index = null)
+    {
         return str_replace(array('-', '.', '/'), "_", $this->generateCacheKeyByName($name));
     }
 
+    public function loadTemplate($name, $index = null)
+    {
 
-    public function getCacheFilename($name) {
+        if (substr_count($name, '::') == 1) {
+            $paths = twig_get_discovered_templates(); // Very expensive call
+            $name = $paths[$name];
+        }
+
+        return parent::loadTemplate($name, $index);
+    }
+
+    public function getCacheFilename($name)
+    {
         if ($cache = $this->getCache()) {
             $name = $this->generateCacheKeyByName($name);
             $name .= '.php';
@@ -59,20 +75,24 @@ class TFD_Environment extends Twig_Environment {
     }
 
 
-    public function flushCompilerCache() {
-        // do a child-first removal of all files and directories in the
-        // compiler cache directory
-        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->getCache()), RecursiveIteratorIterator::CHILD_FIRST);
-        foreach ($iterator as $file) {
-            if ($file->isFile()) {
-                unlink($file);
-            } elseif ($file->isDir()) {
-                rmdir($file);
+    public function flushCompilerCache()
+    {
+        if (is_dir($this->getCache())) {
+            $iterator = new RecursiveDirectoryIterator($this->getCache());
+            foreach (new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::CHILD_FIRST) as $file) {
+                if ($file->isDir()) {
+                    @rmdir($file->getPathname());
+                } else {
+                    @unlink($file->getPathname());
+                }
             }
+            @rmdir($this->getCache());
         }
     }
 
-    protected function writeCacheFile($file, $content) {
+
+    protected function writeCacheFile($file, $content)
+    {
         try {
             if (!is_dir(dirname($file))) {
                 mkdir(dirname($file), 0777, true);
