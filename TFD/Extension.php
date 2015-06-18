@@ -43,8 +43,6 @@ class TFD_Extension extends Twig_Extension {
     $parsers = array();
     $parsers[] = new TFD_TokenParser_With();
     $parsers[] = new TFD_TokenParser_Switch();
-    $parsers[] = new TFD_TokenParser_Unset();
-    $parsers = array_merge($parsers, module_invoke_all('twig_tag', $parsers, $this));
     return $parsers;
   }
 
@@ -64,13 +62,13 @@ class TFD_Extension extends Twig_Extension {
     $filters['defaults'] = new Twig_SimpleFilter('defaults', 'tfd_defaults_filter');
     $filters['size'] = new Twig_SimpleFilter('size', 'format_size');
     $filters['interval'] = new Twig_SimpleFilter('interval', 'tfd_interval');
+    $filters['format_date'] = new Twig_SimpleFilter('format_date', 'tfd_format_date');
     $filters['plural'] = new Twig_SimpleFilter('plural', 'format_plural');
     $filters['url'] = new Twig_SimpleFilter('url', 'tfd_url');
     $filters['t'] = new Twig_SimpleFilter('t', 't');
     $filters['ucfirst'] = new Twig_SimpleFilter('ucfirst', 'ucfirst');
     $filters['wrap'] = new Twig_SimpleFilter('wrap', 'tfd_wrap_text');
-    $filters['image_url'] = new Twig_SimpleFilter('image_url', 'tfd_image_url');
-    $filters['image_size'] = new Twig_SimpleFilter('image_size', 'tfd_image_size');
+    $filters['machine_name'] = new Twig_SimpleFilter('machine_name', 'tfd_machine_name');
     $filters['truncate'] = new Twig_SimpleFilter('truncate', 'tfd_truncate_text');
     $filters['striphashes'] = new Twig_SimpleFilter('striphashes', 'tfd_striphashes');
     $filters = array_merge($filters, module_invoke_all('twig_filter', $filters, $this));
@@ -101,7 +99,9 @@ class TFD_Extension extends Twig_Extension {
     $functions['array_search'] = new Twig_SimpleFunction('array_search', 'array_search');
     $functions['machine_name'] = new Twig_SimpleFunction('machine_name', 'tfd_machine_name');
     $functions['viewblock'] = new Twig_SimpleFunction('viewblock', 'tfd_view_block');
-
+    $functions['image_url'] = new Twig_SimpleFunction('image_url', 'tfd_image_url');
+    $functions['image_size'] = new Twig_SimpleFunction('image_size', 'tfd_image_size');
+    $functions['get_form_errors'] = new Twig_SimpleFunction('get_form_errors', 'tfd_form_get_errors');
 
     $functions = array_merge($functions, module_invoke_all('twig_function', $functions, $this));
     return array_values($functions);
@@ -150,17 +150,10 @@ function tfd_render($var) {
     elseif (is_array($var)) {
       return render($var);
     }
+    return $var;
   }
 }
 
-function tfd_self($enviroment) {
-  /** @var $enviroment TFD_Environment */
-  echo "Dump in " . __FILE__ . " @ line " . __LINE__ . "<pre>";
-  print_r($enviroment);
-  echo "<pre>";
-  die();
-
-}
 
 /**
  * Wrapper around the default drupal hide function.
@@ -184,13 +177,17 @@ function tfd_hide(&$var) {
  * @param $element
  */
 function tfd_striphashes($array) {
-  $output = array();
-  foreach ($array as $key => $value) {
-    if ($key[0] !== '#') {
-      $output[$key] = $value;
+
+  if (is_array($array)){
+    $output = array();
+    foreach ($array as $key => $value) {
+      if ($key[0] !== '#') {
+        $output[$key] = $value;
+      }
     }
+    return $output;
   }
-  return $output;
+  return $array;
 }
 
 /**
@@ -232,6 +229,22 @@ function tfd_wrap_text($value, $tag) {
   if (!empty($value)) {
     return sprintf('<%s>%s</%s>', $tag, trim($value), $tag);
   }
+}
+
+function tfd_form_get_errors() {
+  $errors = form_get_errors();
+  if (!empty($errors)) {
+    $newErrors = array();
+    foreach ($errors as $key => $error) {
+      $newKey = str_replace('submitted][', 'submitted[', $key);
+      if ($newKey !== $key) {
+        $newKey = $newKey . ']';
+      }
+      $newErrors[$newKey] = $error;
+    }
+    $errors = $newErrors;
+  }
+  return $errors;
 }
 
 function tfd_dump($env, $var = NULL, $function = NULL) {
@@ -369,7 +382,7 @@ function tfd_truncate_text($value, $length = 300, $elipse = TRUE, $words = TRUE)
  * @param $date  String containing the date, or unix timestamp
  * @param int $granularity
  */
-function tfd_interval($date, $granularity = 2, $display_ago = TRUE,$langcode = null) {
+function tfd_interval($date, $granularity = 2, $display_ago = TRUE, $langcode = NULL) {
 
 
   $now = time();
@@ -381,12 +394,20 @@ function tfd_interval($date, $granularity = 2, $display_ago = TRUE,$langcode = n
   }
   $interval = $now - $then;
   if ($interval > 0) {
-    return $display_ago ? t('!time ago', array('!time' => format_interval($interval, $granularity,$langcode))) :
-      t('!time', array('!time' => format_interval($interval, $granularity,$langcode)));
+    return $display_ago ? t('!time ago', array('!time' => format_interval($interval, $granularity, $langcode))) :
+      t('!time', array('!time' => format_interval($interval, $granularity, $langcode)));
   }
   else {
-    return format_interval(abs($interval), $granularity);
+    return format_interval(abs($interval), $granularity, $langcode);
   }
+}
+
+function tfd_format_date($date, $type, $langcode = NULL) {
+  if (preg_match('/[^\d]/', $date)) {
+    $date = strtotime($date);
+  }
+
+  return format_date($date, $type, '', NULL, $langcode);
 }
 
 function tfd_machine_name($string) {
