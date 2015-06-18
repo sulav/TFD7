@@ -111,30 +111,43 @@ function twig_clear_cache()
  * Returns a singleton version of the twig template engine
  * @return <object> Twig_Environment
 */
-function twig_get_instance()
-{
-    static $twig_engine;
-    if (!is_object($twig_engine)) {
-        global $theme_info;
-        $twigEnvironment = array();
-        $twigEnvironment['autorender'] = TRUE; // auto rendering of {{content}} instead of doing a {{render(content)}}
-        $twigEnvironment['autoescape'] = false; // Automatically escape all output
-        $twigEnvironment['auto_reload'] = true; //Whether to reload the template if the original source changed.
-        $twigEnvironment['debug'] = false; // When set to `true`, the generated templates have a __toString() method
-        if (false !== $cache = variable_get('file_twigcache_path', false)) {
-            $twigEnvironment['cache'] = $cache;
-        } elseif (false !== $cache = twig_test_cachepath('private://twig_cache' . '/' . $theme_info->name)) {
-            $twigEnvironment['cache'] = $cache;
-        } elseif (FALSE !== $cache = twig_test_cachepath('public://twig_cache' . '/' . $theme_info->name))
-            $twigEnvironment['cache'] = $cache;
-        else {
-            die('Could not write to a valid cache path');
-        }
-        $loader = new TFD_Loader_Filesystem();
-        $twig_engine = new TFD_Environment($loader, $twigEnvironment);
-        $twig_engine->addExtension(new TFD_Extension());
+function twig_get_instance() {
+  static $twig_engine;
+  if (!is_object($twig_engine)) {
+    global $theme_info;
+    $twigEnvironment = array();
+    $twigEnvironment['autorender'] = TRUE; // auto rendering of {{content}} instead of doing a {{render(content)}}
+    $twigEnvironment['autoescape'] = FALSE; // Automatically escape all output
+    $twigEnvironment['auto_reload'] = TRUE; //Whether to reload the template if the original source changed.
+    $twigEnvironment['debug'] = FALSE; // When set to `true`, the generated templates have a __toString() method
+    if (FALSE !== $cache = variable_get('file_twigcache_path', FALSE)) {
+      file_prepare_directory($cache, FILE_CREATE_DIRECTORY);
+      if (!twig_test_cachepath($cache)){
+        die('Could not write to '.$cache);
+      }
+      $twigEnvironment['cache'] = $cache;
     }
-    return $twig_engine;
+    elseif (FALSE !== $cache = twig_test_cachepath('private://twig_cache' . '/' . $theme_info->name)) {
+      $twigEnvironment['cache'] = $cache;
+    }
+    elseif (FALSE !== $cache = twig_test_cachepath('public://twig_cache' . '/' . $theme_info->name)) {
+      $twigEnvironment['cache'] = $cache;
+    }
+    else {
+      $cache = 'public://twig_cache' . '/' . $theme_info->name;
+      // Fallback and create the twig_cache folder in public://
+      file_prepare_directory($cache, FILE_CREATE_DIRECTORY);
+      if (!twig_test_cachepath($cache)){
+        die('Could not write to a valid cache path');
+      } else{
+        $twigEnvironment['cache'] = $cache;
+      }
+    }
+    $loader = new TFD_Loader_Filesystem();
+    $twig_engine = new TFD_Environment($loader, $twigEnvironment);
+    $twig_engine->addExtension(new TFD_Extension());
+  }
+  return $twig_engine;
 }
 
 /**
