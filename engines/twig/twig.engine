@@ -9,26 +9,23 @@
  */
 
 
-/**
- * Register the needed classes with the autoloader
- */
-
 $twig_class_map = array(
-    'Twig_' => DRUPAL_ROOT . '/sites/all/libraries/Twig/lib/Twig/',
-    'TFD_' => DRUPAL_ROOT . '/sites/all/libraries/TFD/TFD/',
+  'Twig_' => DRUPAL_ROOT . '/sites/all/libraries/Twig/lib/Twig/',
+  'TFD_' => DRUPAL_ROOT . '/sites/all/libraries/TFD/TFD/',
 );
 if (module_exists('xautoload')) {
-    $finder = xautoload_get_finder();
-    $finder->registerPrefixesDeep($twig_class_map);
-} else {
-    $autoloader = & drupal_static(__FUNCTION__);
-    if (!$autoloader) {
-        include_once(DRUPAL_ROOT . '/sites/all/libraries/TFD/autoloader/Autoloader.php');
-        $autoloader = UniversalClassLoader::getInstance();
-        $autoloader->registerPrefixes($twig_class_map);
-    }
-
+  $finder = xautoload_get_finder();
+  $finder->registerPrefixesDeep($twig_class_map);
 }
+else {
+  $autoloader = &drupal_static(__FUNCTION__);
+  if (!$autoloader) {
+    include_once(DRUPAL_ROOT . '/sites/all/libraries/TFD/autoloader/Autoloader.php');
+    $autoloader = UniversalClassLoader::getInstance();
+    $autoloader->registerPrefixes($twig_class_map);
+  }
+}
+
 
 
 /**
