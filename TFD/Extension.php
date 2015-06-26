@@ -68,6 +68,8 @@ class TFD_Extension extends Twig_Extension {
     $filters['plural'] = new Twig_SimpleFilter('plural', 'format_plural');
     $filters['url'] = new Twig_SimpleFilter('url', 'tfd_url');
     $filters['t'] = new Twig_SimpleFilter('t', 't');
+    $filters['attributes'] = new Twig_SimpleFilter('attributes', 'drupal_attributes');
+    $filters['check_plain'] = new Twig_SimpleFilter('check_plain', 'check_plain');
     $filters['ucfirst'] = new Twig_SimpleFilter('ucfirst', 'ucfirst');
     $filters['wrap'] = new Twig_SimpleFilter('wrap', 'tfd_wrap_text');
     $filters['machine_name'] = new Twig_SimpleFilter('machine_name', 'tfd_machine_name');
