@@ -1,7 +1,12 @@
 <?php
-
-/**
+/*
+ * This file is part of Twig For Drupal 7.
+ **
+ * @see http://tfd7.rocks for more information
+ *
+ * @author René Bakx
  * @author Gerard van Helden <gerard@zicht.nl>
+ *
  * @copyright Zicht Online <http://zicht.nl>
  */
 class TFD_Node_Switch extends Twig_Node {

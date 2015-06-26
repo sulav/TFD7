@@ -1,6 +1,10 @@
 <?php
-
-/**
+/*
+ * This file is part of Twig For Drupal 7.
+ *
+ * @author René Bakx
+ * @see http://tfd7.rocks for more information
+ *
  * Class TFD_Node_Render
  *
  * Transports the variable to be passed to the render method into a variable

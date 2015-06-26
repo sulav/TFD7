@@ -1,6 +1,11 @@
 <?php
 
-/**
+/*
+ * This file is part of Twig For Drupal 7.
+ *
+ * @author René Bakx
+ * @see http://tfd7.rocks for more information
+ *
  * Class TFD_Node_Hide
  * Transports the variable to be passed to the hide method into a variable
  * before calling the hide method. Prevents strict warnings.

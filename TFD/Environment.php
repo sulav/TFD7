@@ -1,9 +1,11 @@
 <?php
-
-/* Extended environmnent for the drupal version
+/*
+* This file is part of Twig For Drupal 7.
 *
-* Part of the Drupal twig extension distribution
-* http://renebakx.nl/twig-for-drupal
+* @see http://tfd7.rocks for more information
+*
+* @author René Bakx
+* Extended environmnent for the drupal version
 */
 
 class TFD_Environment extends Twig_Environment {

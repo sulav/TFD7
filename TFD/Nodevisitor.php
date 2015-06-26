@@ -1,33 +1,36 @@
 <?php
 
-/**
- *
- * @description : TFD_NodeVisitor checks of the auto_render is set in the
- * twig environment, and if so it converts nodes of the Twig_Node_Print into
- * TFD_Node_Render types.
- *
- * At the same time it checks if a user explicitily called {{ hide(some.var) }}
- * and then cast the Twig_Node_Expression_Function into a TFD_Node_Hide class
- * the properly calls the hide function with variables by reference
- *
- * This visitor is only called during compilation time, and has no slowing down
- * sideeffects during normal runtime
- *
- * This done to have a more fluent interface for the developer instead of having
- * to call {% hide(this) %} and {{ render(that) }}
- *
- *
- * In a drupal 7 template a single variable can contain an array, but Twig only
- * triggers the Twig_Template::getAttribute only for variables that are an object or
- * array.
- *
- * Normally you would call something like {{tabs|render}} but to make it easier
- * for those who work on the frontend {{tabs}} makes more sense.
- *
- *
- *
- * @author: Rene Bakx (rene@renebakx.nl)
- */
+/*
+* This file is part of Twig For Drupal 7.
+*
+* @see http://tfd7.rocks for more information
+*
+* @author René Bakx
+*
+* @description : TFD_NodeVisitor checks of the auto_render is set in the
+* twig environment, and if so it converts nodes of the Twig_Node_Print into
+* TFD_Node_Render types.
+*
+* At the same time it checks if a user explicitily called {{ hide(some.var) }}
+* and then cast the Twig_Node_Expression_Function into a TFD_Node_Hide class
+* the properly calls the hide function with variables by reference
+*
+* This visitor is only called during compilation time, and has no slowing down
+* sideeffects during normal runtime
+*
+* This done to have a more fluent interface for the developer instead of having
+* to call {% hide(this) %} and {{ render(that) }}
+*
+*
+* In a drupal 7 template a single variable can contain an array, but Twig only
+* triggers the Twig_Template::getAttribute only for variables that are an object
+* or array.
+*
+* Normally you would call something like {{tabs|render}} but to make it easier
+* for those who work on the frontend {{tabs}} makes more sense.
+*
+*/
+
 class TFD_NodeVisitor implements Twig_NodeVisitorInterface {
   /**
    * Called before child nodes are visited.

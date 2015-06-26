@@ -1,5 +1,12 @@
 <?php
-
+/*
+ * This file is part of Twig For Drupal 7.
+ **
+ * @see http://tfd7.rocks for more information
+ *
+ * @author René Bakx
+ *
+ */
 
 class TFD_Node_Expression_Nocall extends Twig_Node_Expression_Call {
 

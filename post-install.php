@@ -1,9 +1,12 @@
 #!/usr/bin/env drush
 <?php
 /**
- * @file: post-install.php
- * @author: Rene Bakx (rene@71media.net)
- * @date: 11-04-2012
+/*
+ * This file is part of Twig For Drupal 7.
+ *
+ * @see http://tfd7.rocks for more information
+ *
+ * @author René Bakx
  * @description: This file is supposed to run after you installed D7, TWIG  and TFD
  * it moves certain folders in the correct place and configures the autoloader.
  *

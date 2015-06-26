@@ -1,10 +1,12 @@
 <?php
-
-/* register the drupal specific tags and filters within a
-* proper declared twig extension
+/*
+* This file is part of Twig For Drupal 7.
 *
-* Part of the Drupal twig extension distribution
-* http://renebakx.nl/twig-for-drupal
+* @see http://tfd7.rocks for more information
+*
+* @author René Bakx
+* @description register the drupal specific tags and filters within a proper
+* declared twig extension
 */
 
 class TFD_Extension extends Twig_Extension {
@@ -142,7 +144,7 @@ class TFD_Extension extends Twig_Extension {
  * @param $var array item from the render array of doom item you wish to be rendered.
  * @return string
  */
-function tfd_render($var) {
+function tfd_render(&$var) {
   if (isset($var) && !is_null($var)) {
     if (is_scalar($var)) {
       return $var;
