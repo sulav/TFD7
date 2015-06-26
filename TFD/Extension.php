@@ -104,6 +104,7 @@ class TFD_Extension extends Twig_Extension {
     $functions['image_url'] = new Twig_SimpleFunction('image_url', 'tfd_image_url');
     $functions['image_size'] = new Twig_SimpleFunction('image_size', 'tfd_image_size');
     $functions['get_form_errors'] = new Twig_SimpleFunction('get_form_errors', 'tfd_form_get_errors');
+    $functions['children'] = new Twig_SimpleFunction('children', 'tfd_get_children');
 
     $functions = array_merge($functions, module_invoke_all('twig_function', $functions, $this));
     return array_values($functions);
@@ -450,4 +451,21 @@ function tfd_view_block($delta, $module = NULL, $render = TRUE) {
     $output = ($render) ? render($build) : $build;
   }
   return $output;
+}
+
+/**
+ * Return the children of an element
+ *
+ * @param $render_array
+ * @return array
+ */
+function tfd_get_children($render_array) {
+  if (!empty($render_array) && is_array($render_array)) {
+    $children = array();
+    foreach (element_children($render_array) as $key) {
+      $children[] = $render_array[$key];
+    }
+    return $children;
+  }
+  return array();
 }
