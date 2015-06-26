@@ -1,51 +1,18 @@
 <?php
-/**
- * Loads template from the filesystem.
+/*
+ * This file is part of Twig For Drupal 7.
  *
- * Part of the Drupal twig extension distribution
- * http://renebakx.nl/twig-for-drupal
+ * @author René Bakx
+ * @see http://tfd7.rocks for more information
+ *
+ * @description Loads template from the filesystem.
  */
-
 class TFD_Loader_Filesystem extends Twig_Loader_Filesystem {
   protected $resolverCache;
-  protected $apcprefix = FALSE;
 
   public function __construct() {
     parent::__construct(array());
     $this->resolverCache = array();
-    if (extension_loaded('apc')) {
-      global $drupal_hash_salt;
-      $this->apcprefix = 'tfd.' . $drupal_hash_salt . '.';
-      if ($resolvercache = apc_fetch($this->apcprefix . 'resolver')) {
-        $this->resolverCache = $resolvercache;
-      }
-    }
-  }
-
-  // TODO: Figure out if this can be cached in APC as well.
-  public function getCacheKey($name) {
-
-    $found = FALSE;
-    if (isset($this->cache[$name])) {
-      $found = TRUE;
-      return $this->cache[$name];
-    }
-    elseif (is_readable($name)) {
-      $this->cache[$name] = $name;
-      $found = TRUE;
-    }
-    else {
-      $lookup_paths = twig_get_discovered_templates(); // Very expensive call
-      $fullTemplatePath = $lookup_paths[$name];
-      if (is_readable($fullTemplatePath)) {
-        $this->cache[$name] = $fullTemplatePath;
-        $found = TRUE;
-      }
-    }
-    if (!$found) {
-      throw new RuntimeException(sprintf('Unable to load template "%s"', $name));
-    }
-    return $this->cache[$name];
   }
 
 
@@ -55,27 +22,29 @@ class TFD_Loader_Filesystem extends Twig_Loader_Filesystem {
 
 
   public function findTemplate($name) {
+    $this->validateName($name);
     if (!isset($this->resolverCache[$name])) {
       $found = FALSE;
-      if ($fullPath = $this->getCacheKey($name)) {
-        $this->resolverCache[$name] = $fullPath;
-        if ($this->apcprefix) {
-          apc_store($this->apcprefix . 'resolver', $this->resolverCache);
-        }
+      if (is_readable($name)) {
+        $this->resolverCache[$name] = $name;
         $found = TRUE;
       }
+      else {
+        $paths = twig_get_discovered_templates();
+
+        if (array_key_exists($name, $paths)) {
+          $completeName = $paths[$name];
+          if (is_readable($completeName)) {
+            $this->resolverCache[$name] = $completeName;
+            $found = TRUE;
+          }
+        }
+      }
       if (!$found) {
-        throw new RuntimeException(sprintf('Unable to load template "%s"', $name));
+        throw new Twig_Error_Loader(sprintf('Could not find a cache key for template "%s"', $name));
       }
     }
     return $this->resolverCache[$name];
-  }
-
-  public function isFresh($name, $time) {
-    if (!is_readable($name)) {
-      $name = $this->findTemplate($name);
-    }
-    return filemtime($name) <= $time;
   }
 
 }

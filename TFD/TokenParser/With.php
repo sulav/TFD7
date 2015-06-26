@@ -1,5 +1,10 @@
 <?php
-/**
+/*
+ * This file is part of Twig For Drupal 7.
+ **
+ * @see http://tfd7.rocks for more information
+ *
+ * @author René Bakx
  * @author Gerard van Helden <gerard@zicht.nl>
  */
 
@@ -51,65 +56,62 @@
  *
  * etcetera.
  */
+class TFD_TokenParser_With extends Twig_TokenParser {
+  private $options = array(
+    'merged',
+    'sandboxed',
+    'only'
+  );
 
-class TFD_TokenParser_With extends Twig_TokenParser
-{
-    private $options = array(
-        'merged',
-        'sandboxed'
-    );
+  /**
+   * Gets the tag name associated with this token parser.
+   *
+   * @param string The tag name
+   */
+  public function getTag() {
+    return 'with';
+  }
 
-    /**
-     * Gets the tag name associated with this token parser.
-     *
-     * @param string The tag name
-     */
-    public function getTag()
-    {
-        return 'with';
+  /**
+   * Parses a token and returns a node.
+   *
+   * @param Twig_Token $token A Twig_Token instance
+   *
+   * @return Twig_NodeInterface A Twig_NodeInterface instance
+   */
+  public function parse(Twig_Token $token) {
+    $stream = $this->parser->getStream();
+    $start = $stream->getCurrent();
+    $arguments = array();
+    do {
+      $value = $this->parser->getExpressionParser()->parseExpression();
+      if ($stream->test('as')) {
+        $stream->expect('as');
+        $name = $stream->expect(Twig_Token::NAME_TYPE)->getValue();
+      }
+      else {
+        $name = NULL;
+      }
+      $arguments[] = array('name' => $name, 'value' => $value);
+
+      $end = !$stream->test(Twig_Token::PUNCTUATION_TYPE, ',');
+      if (!$end) {
+        $stream->expect(Twig_Token::PUNCTUATION_TYPE, ',');
+      }
+    } while (!$end);
+
+    while ($stream->test($this->options)) {
+      $options[] = $stream->expect($this->options)->getValue();
     }
 
-    /**
-     * Parses a token and returns a node.
-     *
-     * @param Twig_Token $token A Twig_Token instance
-     *
-     * @return Twig_NodeInterface A Twig_NodeInterface instance
-     */
-    public function parse(Twig_Token $token)
-    {
-        $stream = $this->parser->getStream();
-        $start = $stream->getCurrent();
-        $arguments = array();
-        do {
-            $value = $this->parser->getExpressionParser()->parseExpression();
-            if ($stream->test('as')) {
-                $stream->expect('as');
-                $name = $stream->expect(Twig_Token::NAME_TYPE)->getValue();
-            } else {
-                $name = null;
-            }
-            $arguments[] = array('name' => $name, 'value' => $value);
-
-            $end = !$stream->test(Twig_Token::PUNCTUATION_TYPE, ',');
-            if (!$end) {
-                $stream->expect(Twig_Token::PUNCTUATION_TYPE, ',');
-            }
-        } while (!$end);
-
-        while ($stream->test($this->options)) {
-            $options[] = $stream->expect($this->options)->getValue();
-        }
-
-        $stream->expect(Twig_Token::BLOCK_END_TYPE);
-        $body = $this->parser->subparse(array($this, 'decideWithEnd'), true);
-        $stream->expect(Twig_Token::BLOCK_END_TYPE);
-        return new TFD_Node_With($arguments, $body, $options, $start->getLine(), $start->getValue());
-    }
+    $stream->expect(Twig_Token::BLOCK_END_TYPE);
+    $body = $this->parser->subparse(array($this, 'decideWithEnd'), TRUE);
+    $stream->expect(Twig_Token::BLOCK_END_TYPE);
+    return new TFD_Node_With($arguments, $body, $options, $start->getLine(), $start->getValue());
+  }
 
 
-    function decideWithEnd($token)
-    {
-        return $token->test('endwith');
-    }
+  function decideWithEnd($token) {
+    return $token->test('endwith');
+  }
 }
