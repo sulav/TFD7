@@ -28,57 +28,53 @@
  *
  * @author: Rene Bakx (rene@renebakx.nl)
  */
-class TFD_NodeVisitor implements Twig_NodeVisitorInterface
-{
-    /**
-     * Called before child nodes are visited.
-     *
-     * @param Twig_NodeInterface $node The node to visit
-     * @param Twig_Environment $env The Twig environment instance
-     *
-     * @return Twig_NodeInterface The modified node
-     */
-    function enterNode(Twig_NodeInterface $node, Twig_Environment $env)
-    {
-        return $node;
-    }
+class TFD_NodeVisitor implements Twig_NodeVisitorInterface {
+  /**
+   * Called before child nodes are visited.
+   *
+   * @param Twig_NodeInterface $node The node to visit
+   * @param Twig_Environment $env The Twig environment instance
+   *
+   * @return Twig_NodeInterface The modified node
+   */
+  function enterNode(Twig_NodeInterface $node, Twig_Environment $env) {
+    return $node;
+  }
 
-    function leaveNode(Twig_NodeInterface $node, Twig_Environment $env)
-    {
-        if ($node instanceof Twig_Node_Print) {
-            // make sure that every {{ }} printed object is handled as a TFD_Node_Render node (aka autorender)
-            if (!$node->getNode('expr') instanceof Twig_Node_Expression_Function) {
-                if ($env->isAutoRender()) {
-                    $targetNode = $node->getNode('expr');
-                    if ($targetNode instanceof Twig_Node_Expression_Name) {
-                        $targetNode->setAttribute('always_defined', true);
-                    }
-                    if (!$targetNode instanceof Twig_Node_Expression_MethodCall) {
-                        $node = new TFD_Node_Render($targetNode, $node->getLine(), $node->getNodeTag());
-                    }
-                }
-            } elseif ($node->getNode('expr') instanceof Twig_Node_Expression_Function) {
-                $targetNode = $node->getNode('expr');
-                if ($targetNode->getAttribute('name') == 'hide') {
-                    $targetNode = $this->castObject('TFD_Node_Expression_Nocall', $targetNode);
-                    $targetNode->setAttribute('always_defined', true);
-                    $node = new TFD_Node_Hide($targetNode, $node->getLine(), $node->getNodeTag());
-                }
-            }
+  function leaveNode(Twig_NodeInterface $node, Twig_Environment $env) {
+    if ($node instanceof Twig_Node_Print) {
+      // make sure that every {{ }} printed object is handled as a TFD_Node_Render node (aka autorender)
+      if (!$node->getNode('expr') instanceof Twig_Node_Expression_Function) {
+        if ($env->isAutoRender()) {
+          $targetNode = $node->getNode('expr');
+          if ($targetNode instanceof Twig_Node_Expression_Name) {
+            $targetNode->setAttribute('always_defined', TRUE);
+          }
+          if (!$targetNode instanceof Twig_Node_Expression_MethodCall) {
+            $node = new TFD_Node_Render($targetNode, $node->getLine(), $node->getNodeTag());
+          }
         }
-        return $node;
+      }
+      elseif ($node->getNode('expr') instanceof Twig_Node_Expression_Function) {
+        $targetNode = $node->getNode('expr');
+        if ($targetNode->getAttribute('name') == 'hide') {
+          $targetNode = $this->castObject('TFD_Node_Expression_Nocall', $targetNode);
+          $targetNode->setAttribute('always_defined', TRUE);
+          $node = new TFD_Node_Hide($targetNode, $node->getLine(), $node->getNodeTag());
+        }
+      }
     }
+    return $node;
+  }
 
-    /**
-     * @return integer The priority level
-     */
-    function getPriority()
-    {
-        return 10;
-    }
+  private function castObject($class, $object) {
+    return unserialize(preg_replace('/^O:\d+:"[^"]++"/', 'O:' . strlen($class) . ':"' . $class . '"', serialize($object)));
+  }
 
-    private function castObject($class, $object)
-    {
-        return unserialize(preg_replace('/^O:\d+:"[^"]++"/', 'O:' . strlen($class) . ':"' . $class . '"', serialize($object)));
-    }
+  /**
+   * @return integer The priority level
+   */
+  function getPriority() {
+    return 10;
+  }
 }
