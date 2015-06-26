@@ -1,19 +1,15 @@
 <?php
-/* Drupal implementation of the twig template engine.
+/*
+ * This file is part of Twig For Drupal 7.
  *
- * You *need* PHP 5.4.x or higher to use code.
- *
- * @version 7.2-dev
  * @author René Bakx
- *
+ * @see http://tfd7.rocks for more information
  */
 
 
 /**
  * Register the needed classes with the autoloader
  */
-
-
 if (module_exists('xautoload')) {
   $twig_class_map = array(
     'Twig_' => DRUPAL_ROOT . '/sites/all/libraries/Twig/lib/Twig/',
@@ -23,7 +19,6 @@ if (module_exists('xautoload')) {
   $finder->registerPrefixesDeep($twig_class_map);
 }
 else {
-
   $twig_class_map = array(
     'Twig_' => DRUPAL_ROOT . '/sites/all/libraries/Twig/lib/',
     'TFD_' => DRUPAL_ROOT . '/sites/all/libraries/TFD/',
@@ -114,18 +109,28 @@ function twig_clear_cache() {
 
 /*
  * Returns a singleton version of the twig template engine
- * @return <object> Twig_Environment
-*/
+ * @return TFD_Environment
+ */
 function twig_get_instance() {
   static $twig_engine;
   if (!is_object($twig_engine)) {
     global $theme_info;
     $twigEnvironment = array();
-    $twigEnvironment['autorender'] = TRUE; // auto rendering of {{content}} instead of doing a {{render(content)}}
-    $twigEnvironment['autoescape'] = FALSE; // Automatically escape all output
-    $twigEnvironment['auto_reload'] = TRUE; //Whether to reload the template if the original source changed.
-    $twigEnvironment['debug'] = FALSE; // When set to `true`, the generated templates have a __toString() method
+    $twigEnvironment['autorender'] = variable_get(
+      'twig_autorender',
+      TRUE
+    ); // auto rendering of {{content}} instead of doing a {{render(content)}}
+    $twigEnvironment['autoescape'] = variable_get('twig_autoescape', FALSE); // Automatically escape all output
+    $twigEnvironment['auto_reload'] = variable_get(
+      'twig_auto_reload',
+      TRUE
+    ); //Whether to reload the template if the original source changed.
+    $twigEnvironment['debug'] = variable_get(
+      'theme_debug',
+      FALSE
+    ); // When set to `true`, the generated templates have a __toString() method
     if (FALSE !== $cache = variable_get('file_twigcache_path', FALSE)) {
+      file_prepare_directory($cache, FILE_CREATE_DIRECTORY);
       $twigEnvironment['cache'] = $cache;
     }
     elseif (FALSE !== $cache = twig_test_cachepath('private://twig_cache' . '/' . $theme_info->name)) {
@@ -135,7 +140,15 @@ function twig_get_instance() {
       $twigEnvironment['cache'] = $cache;
     }
     else {
-      die('Could not write to a valid cache path');
+      $cache = 'public://twig_cache' . '/' . $theme_info->name;
+      // Fallback and create the twig_cache folder in public://
+      file_prepare_directory($cache, FILE_CREATE_DIRECTORY);
+      if (!twig_test_cachepath($cache)) {
+        die('Could not write to a valid cache path');
+      }
+      else {
+        $twigEnvironment['cache'] = $cache;
+      }
     }
     $loader = new TFD_Loader_Filesystem();
     $twig_engine = new TFD_Environment($loader, $twigEnvironment);
@@ -219,3 +232,4 @@ function twig_test_cachepath($path) {
   }
   return FALSE;
 }
+
