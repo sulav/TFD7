@@ -147,7 +147,7 @@ class TFD_Extension extends Twig_Extension {
  * @param $var array item from the render array of doom item you wish to be rendered.
  * @return string
  */
-function tfd_render(&$var) {
+function tfd_render($var) {
   if (isset($var) && !is_null($var)) {
     if (is_scalar($var)) {
       return $var;
@@ -169,7 +169,7 @@ function tfd_render(&$var) {
  * @param $var array item from the render array of doom item you wish to hide.
  * @return mixed
  */
-function tfd_hide(&$var) {
+function tfd_hide($var) {
   if (!is_null($var) && !is_scalar($var) && count($var) > 0) {
     hide($var);
   }

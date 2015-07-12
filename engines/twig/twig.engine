@@ -116,19 +116,10 @@ function twig_get_instance() {
   if (!is_object($twig_engine)) {
     global $theme_info;
     $twigEnvironment = array();
-    $twigEnvironment['autorender'] = variable_get(
-      'twig_autorender',
-      TRUE
-    ); // auto rendering of {{content}} instead of doing a {{render(content)}}
+    $twigEnvironment['autorender'] = variable_get('twig_autorender',TRUE);
     $twigEnvironment['autoescape'] = variable_get('twig_autoescape', FALSE); // Automatically escape all output
-    $twigEnvironment['auto_reload'] = variable_get(
-      'twig_auto_reload',
-      TRUE
-    ); //Whether to reload the template if the original source changed.
-    $twigEnvironment['debug'] = variable_get(
-      'theme_debug',
-      FALSE
-    ); // When set to `true`, the generated templates have a __toString() method
+    $twigEnvironment['auto_reload'] = variable_get('twig_auto_reload',TRUE);
+    $twigEnvironment['debug'] = variable_get('theme_debug',FALSE);
     if (FALSE !== $cache = variable_get('file_twigcache_path', FALSE)) {
       file_prepare_directory($cache, FILE_CREATE_DIRECTORY);
       $twigEnvironment['cache'] = $cache;
