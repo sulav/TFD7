@@ -75,6 +75,7 @@ class TFD_Extension extends Twig_Extension {
     $filters['machine_name'] = new Twig_SimpleFilter('machine_name', 'tfd_machine_name');
     $filters['truncate'] = new Twig_SimpleFilter('truncate', 'tfd_truncate_text');
     $filters['striphashes'] = new Twig_SimpleFilter('striphashes', 'tfd_striphashes');
+    $filters['without'] = new Twig_SimpleFilter('without', 'tfd_without');
     $filters = array_merge($filters, module_invoke_all('twig_filter', $filters, $this));
     return array_values($filters);
 
@@ -173,6 +174,33 @@ function tfd_hide($var) {
   if (!is_null($var) && !is_scalar($var) && count($var) > 0) {
     hide($var);
   }
+}
+
+/**
+ * Additional Twig filter provided in Drupal 8 to render array ommitting
+ * cetain elements in the array
+ *
+ * Retrieves array of array elements to exclude from array
+ *
+ * @param $element
+ * @return array
+ */
+
+function tfd_without($array) {
+  if ($array instanceof ArrayAccess) {
+    $filtered = clone $array;
+  }
+  else {
+    $filtered = $array;
+  }
+  $args = func_get_args();
+  unset($args[0]);
+  foreach ($args as $arg) {
+    if (isset($filtered[$arg])) {
+      unset($filtered[$arg]);
+    }
+  }
+  return $filtered;
 }
 
 /**
