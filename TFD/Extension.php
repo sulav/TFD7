@@ -352,11 +352,12 @@ function tfd_url($item, $options = array()) {
     $ret = url('node/' . $item, (array) $options);
   }
   else {
-    $ret = url($item, (array) $options);
+    $parsed = drupal_parse_url($item);
+    $options += $parsed;
+    $ret = url($parsed['path'], (array) $options);
   }
   return check_url($ret);
 }
-
 
 function tfd_test_property($element, $propertyName, $value = TRUE) {
   return array_key_exists("#{$propertyName}", $element) && $element["#{$propertyName}"] == $value;
