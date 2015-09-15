@@ -52,8 +52,11 @@ class TFD_Environment extends Twig_Environment
     {
 
         if (substr_count($name, '::') == 1) {
-            $paths = twig_get_discovered_templates(); // Very expensive call
-            $name = $paths[$name];
+           // $paths = twig_get_discovered_templates(); // Very expensive call
+            /** @var TFD_Loader_Filesystem $loader */
+            $loader = $this->getLoader();
+            $name = $loader->findTemplate($name);
+            //$name = $paths[$name];
         }
 
         return parent::loadTemplate($name, $index);
