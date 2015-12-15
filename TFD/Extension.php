@@ -476,7 +476,8 @@ function tfd_view_block($delta, $module = NULL, $render = TRUE) {
   if ($block) {
     $block->region = 'tfd_block';
     $block->status = 1;
-    $blockdata = _block_render_blocks([$block->delta => $block]);
+    $block_data = array($block->delta => $block);
+    $blockdata = _block_render_blocks($block_data);
     $build = _block_get_renderable_array($blockdata);
     $output = ($render) ? render($build) : $build;
   }
